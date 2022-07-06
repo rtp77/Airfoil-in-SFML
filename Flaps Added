@@ -18,11 +18,9 @@ int main(int argc, char** argv[]) {
 
 	float Actualarr[35][2] = { {500,0.65},{475,5.7},{450,10.4},{400,18.75},{350,25.9},{300,31.8},{250,36.2},{200,39},{150,39.4},{125,38.35},{100,36.3},{75,33.05},{50,28.15},{37.5,24.8},{25,20.65},{12.5,14.95},{6.25,10.75},{0,0},{6.25,-8.25},{12.5,-11.35},{25,-15.05},{37.5,-17.3},{50,-18.75},{75,-20.5},{100,-21.15},{125,-21.1},{150,-20.6},{200,-19},{250,-16.7},{300,-13.8},{350,-10.7},{400,-7.5},{450,-4.1},{475,-2.4},{500,-0.65} };
 
+	//Airfoil
 	sf::VertexArray path(sf::LinesStrip, 35);
-
-
 	sf::Color c = sf::Color::Black;
-
 	//initial positioning
 	for (int i = 0; i < 35; i++) {
 		path[i].position = sf::Vector2f(arr[i][0]+adjustx,-arr[i][1]+adjusty);
@@ -30,12 +28,22 @@ int main(int argc, char** argv[]) {
 		Actualarr[i][0] = arr[i][0] +adjustx;
 		Actualarr[i][1] = -arr[i][1] +adjusty;
 	}
-
+	//Airfoil size
 	float initialSize = 0;
 	float actualSize = 0;
+	//Airfoil Altitude
+	float setAltitude = 300;
+	float actualAltitude = 0;
 
-	float initialRotate = 0;
-	float actualRotate = 0;
+	//Flaps
+	float Flaparr[2][2] = { {350,-10.7},{400,-10.5} };
+	sf::VertexArray pathFlap(sf::LinesStrip, 2);
+	pathFlap[0].position = sf::Vector2f(arr[31][0] + adjustx, -arr[31][1] + adjusty);
+	pathFlap[0].color = c;
+	pathFlap[1].position = sf::Vector2f(arr[34][0] + adjustx, -arr[34][1] + adjusty +20);
+	pathFlap[1].color = c;
+	//FlapAngle
+	int flapAngle = 0;
 
 	sf::Clock deltaClock;
 	while (window.isOpen()) {
@@ -55,46 +63,49 @@ int main(int argc, char** argv[]) {
 					Actualarr[i][1] = -arr[i][1] * (actualSize)+adjusty;
 				}
 			}
-			//Rotate Change
-			if (initialRotate != actualRotate) {
+			//Altitude Change
+			if (setAltitude != (800-actualAltitude)) {
+				actualAltitude = 800-setAltitude;
 				for (int i = 0; i < 35; i++) {
-					int InitialX = Actualarr[i][0];
-					int InitialY = Actualarr[i][1];
-					std::cout << "Initialx is " << InitialX << " and Initialy is " << InitialY << std::endl;
-					int InitialHypo = sqrt(InitialX * InitialX + InitialY * InitialY);
-					std::cout << "Hypotenuse is " << InitialHypo << std::endl;
-					std::cout << "Rotation is " << actualRotate << std::endl;
-					int NewY = sin(actualRotate*0.0174533) * InitialHypo * 0.2;
-					int NewX = cos(actualRotate*0.0174533) * InitialHypo * 0.2;
-					std::cout << "NewX is " << NewX << " and NewY is " << NewY <<"\n\n"<<std::endl;
-					path[i].position = sf::Vector2f(InitialX + NewX - adjustx, InitialY + NewY);
+					path[i].position = sf::Vector2f(Actualarr[i][0]+100, Actualarr[i][1]+actualAltitude-400);
 				}
-				initialRotate = actualRotate;
 			}
-			
-
 
 		}//pollevent 
 
 		ImGui::SFML::Update(window, deltaClock.restart());
+		
+		//flap set
+		int flapLength = flapAngle * 0.1;
+		pathFlap[0].position = sf::Vector2f(path[30].position.x, path[30].position.y);
+		pathFlap[1].position = sf::Vector2f(path[34].position.x-flapLength, path[34].position.y+flapAngle);
+
 
 		
-		
 
-
-		ImGui::Begin("Lap Simulation");
-		ImGui::Text("Lap Simulation");
+		ImGui::Begin("Airfoil");
+		ImGui::Text("Airfoil");
 
 		ImGui::Checkbox("Begin", &start);
 		ImGui::SliderFloat("Size", &actualSize, 1, 2);
-		ImGui::SliderFloat("Rotate", &actualRotate, -50, 50);
+		ImGui::SliderFloat("Altitude (ft)", &setAltitude, 50, 750);
+		if (ImGui::Button("Flap + ")) {
+			if (flapAngle < 80) {
+				flapAngle += 20;
+			}
+		}
+		if (ImGui::Button("Flap -")) {
+			if (flapAngle >= 20) {
+				flapAngle -= 20;
+			}
+		}
 		ImGui::End();
-
 
 
 		window.clear(sf::Color::White);
 
 		window.draw(path);
+		window.draw(pathFlap);
 
 		ImGui::SFML::Render(window);
 		window.display();
